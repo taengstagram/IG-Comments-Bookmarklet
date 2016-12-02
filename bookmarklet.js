@@ -4,10 +4,10 @@
         Tested only in Chrome, ¯\_(ツ)_/¯
         Please feel free to port/fix/fork.
     */
-    const ver = 'V.20161202.150628';
+    const ver = 'V.20161202.152021';
     const src = 'https://github.com/taengstagram/IG-Comments-Bookmarklet/';
-    console.log(ver);
-    console.log(src);
+    console.info(ver);
+    console.info(src);
 
     let shortCode = false;
 
