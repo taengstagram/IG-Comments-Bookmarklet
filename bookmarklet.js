@@ -4,30 +4,18 @@
         Tested only in Chrome, ¯\_(ツ)_/¯
         Please feel free to port/fix/fork.
     */
-    const ver = 'V.20161202.152021';
+    const ver = 'V.20161202.154557';
     const src = 'https://github.com/taengstagram/IG-Comments-Bookmarklet/';
     console.info(ver);
     console.info(src);
 
-    let shortCode = false;
-
-    if (typeof(window._sharedData) == 'undefined' ||
-        typeof(window._sharedData.entry_data.PostPage) == 'undefined' ||
-        typeof(window._sharedData.entry_data.PostPage[0].media) == "undefined") {
-        
-        let patt = /https?:\/\/www\.instagram\.com\/p\/([^\/]+)/i;
-        let matches = patt.exec(document.location.href);
-        if (matches) {
-            shortCode = matches[1];
-        }
-    } else {
-        shortCode = window._sharedData.entry_data.PostPage[0].media.code;
-    }
-
-    if (!shortCode) {
+    let patt = /https?:\/\/www\.instagram\.com\/p\/([^\/]+)/i;
+    let matches = patt.exec(document.location.href);
+    if (!matches) {
         console.error('Unable to process page');
         return;
     }
+    let shortCode = matches[1];
 
     function getCookie(name) {
       let value = "; " + document.cookie;
