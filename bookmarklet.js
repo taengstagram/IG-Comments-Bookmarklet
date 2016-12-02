@@ -4,8 +4,8 @@
         Tested only in Chrome, ¯\_(ツ)_/¯
         Please feel free to port/fix/fork.
     */
-    const ver = 'V.20161202.145810';
-    const src = 'https://gist.github.com/taengstagram/91c858cdcd5ecb0d1679fd5d5e20aba0';
+    const ver = 'V.20161202.150628';
+    const src = 'https://github.com/taengstagram/IG-Comments-Bookmarklet/';
     console.log(ver);
     console.log(src);
 
