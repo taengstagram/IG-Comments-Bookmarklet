@@ -4,7 +4,7 @@
         Tested only in Chrome, ¯\_(ツ)_/¯
         Please feel free to port/fix/fork.
     */
-    const ver = 'V.20161202.154557';
+    const ver = 'V.20161205.212031';
     const src = 'https://github.com/taengstagram/IG-Comments-Bookmarklet/';
     console.info(ver);
     console.info(src);
@@ -16,6 +16,7 @@
         return;
     }
     let shortCode = matches[1];
+    let maxPages = 0;
 
     function getCookie(name) {
       let value = "; " + document.cookie;
@@ -77,7 +78,7 @@
             container.classList.add(itemClassName);
             container.innerHTML = '<a class="' + linkClassName + '" href="/' + node.user.username + '/">' + node.user.username + '</a> '
                 + '<span>' + renderEmoji(node.text) + '</span>'
-                + '<span class="dt">' + generateDt(node.created_at) + '</span>';
+                + '<span data-comment-id="' + node.id + '" class="dt">' + generateDt(node.created_at) + '</span>';
             parent.appendChild(container);
 
             if (i == nodes.length - 1) {
@@ -112,10 +113,10 @@
     let mentions = [];
     let mentionRegex = /@([a-z0-9_]+([\.][a-z0-9]+)?)/ig;
 
-    let q = 0;
+    let q = 1;
 
     function sendRequest(shortCode, cursor) {
-        renderStatus('Loading... ' + q);
+        renderStatus('Loading... ' + q + '/' + maxPages);
         let xhr = new XMLHttpRequest();
         let params = generateParams(shortCode, cursor);
         xhr.open("POST", "https://www.instagram.com/query/", true);
@@ -128,7 +129,7 @@
 
             try {
                 let info = JSON.parse(xhr.responseText);
-                renderStatus('Processing... ' + q);
+                renderStatus('Processing... ' + q + '/' + maxPages);
                 let comments = info.comments.nodes;
                 comments.sort(function(a, b) {
                     // sort in desc datetime order
@@ -144,14 +145,14 @@
                     if (WANTED.indexOf(comments[i].user.id) >= 0) {
                         displayComments.push(comments[i]);
 
+                        // extract mention from comment
                         let matchesMention = null;
                         do {
                             matchesMention = mentionRegex.exec(comments[i].text);
-                            if (matchesMention) {
+                            if (matchesMention && mentions.indexOf(matchesMention[1]) < 0) {
                                 mentions.push(matchesMention[1]);
                             }
                         } while (matchesMention);
-
 
                     } else {
                         let mentionFound = mentions.indexOf(comments[i].user.username);
@@ -161,18 +162,12 @@
                         }
                     }
                 } 
-                if (info.comments.page_info.has_previous_page && q <= 50) {
+                if (info.comments.page_info.has_previous_page) {
                     let cursor = info.comments.page_info.start_cursor;
                     sendRequest(shortCode, cursor);
                     return;
                 }
                 renderStatus('Done. ' + displayComments.length + ' comment(s) found.');
-                if (mentions.length > 0) {
-                    for (let i = 0; i < mentions.length; i++) {
-                        let mentioned_user = mentions[i].mentioned_user;
-
-                    }
-                }
                 renderComments(displayComments);
                 
             } catch (err) {
@@ -185,9 +180,7 @@
                     renderStatus('Unexpected error: ' + err + count_text);
                 }
                 renderComments(displayComments);
-
             }
-            return;
         };
         q++;
         xhr.send(params);
@@ -195,7 +188,11 @@
 
     if (typeof(twemoji) == 'undefined' || typeof(moment) == 'undefined' || typeof(moment.tz) == 'undefined') {  // inject if not available
         let head = document.getElementsByTagName('head')[0];
-        let scripts = ['https://twemoji.maxcdn.com/2/twemoji.min.js?2.2.2', 'https://unpkg.com/moment/min/moment.min.js', 'https://unpkg.com/moment-timezone/builds/moment-timezone-with-data.min.js'];
+        let scripts = [
+            'https://twemoji.maxcdn.com/2/twemoji.min.js?2.2.2'
+            , 'https://unpkg.com/moment/min/moment.min.js'
+            , 'https://unpkg.com/moment-timezone/builds/moment-timezone-with-data.min.js'
+        ];
         for (let i = 0; i < scripts.length; i++) {
             let scriptCustom = document.createElement('script');
             scriptCustom.src = scripts[i];
@@ -204,8 +201,41 @@
         }
         let styleCustom = document.createElement('style');
         styleCustom.innerHTML = 'img.emoji { height: 1em; width: 1em; margin: 0 .05em 0 .1em; vertical-align: -0.1em; } '
-            + 'span.dt { color: #888; font-size: small; display: block; } .st { color: #1565c0; } .fn a { color: #1565c0; font-size: x-small; }';
+            + 'span.dt { color: #888; font-size: small; display: block; } .st { color: #1565c0; } '
+            + '.fn a { color: #1565c0; font-size: x-small; }';
         head.appendChild(styleCustom);
     }
-    sendRequest(shortCode, '0');
+    let xhr = new XMLHttpRequest()
+    xhr.open("GET", "https://www.instagram.com/p/" + shortCode + "/?__a=1", true);
+    xhr.onreadystatechange = function() {
+        if (xhr.readyState != 4) {
+            return;
+        }
+        let info = JSON.parse(xhr.responseText);
+        if (WANTED.indexOf(info.media.owner.id) < 0) {
+            WANTED.push(info.media.owner.id);
+        }
+        if (info.media.caption) {
+            // extract mentions in caption
+            let matchesMention = null;
+            do {
+                matchesMention = mentionRegex.exec(info.media.caption);
+                if (matchesMention && mentions.indexOf(matchesMention[1]) < 0) {
+                    mentions.push(matchesMention[1]);
+                }
+            } while (matchesMention);
+        }
+        if (info.media.usertags.nodes.length > 0) {
+            // extract user tags as mentions
+            for (let i = 0; i < info.media.usertags.nodes.length; i++) {
+                let username = info.media.usertags.nodes[i].user.username;
+                if (mentions.indexOf(username) < 0) {
+                    mentions.push(username);
+                }
+            }
+        }
+        maxPages = Math.ceil(info.media.comments.count / 1000);
+        sendRequest(info.media.code, '0');
+    };
+    xhr.send();
 })();
