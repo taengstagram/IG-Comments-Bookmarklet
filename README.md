@@ -1,4 +1,4 @@
 
 # Install
-Get latest version [**here**](https://cdn.rawgit.com/taengstagram/IG-Comments-Bookmarklet/f104871bdba26bb36633866c5cc36536f5de0df6/help.html).
+Get latest version [**here**](https://cdn.rawgit.com/taengstagram/IG-Comments-Bookmarklet/6d3e2cd29b594124b9e53dd08d0bd54882f5a28e/help.html).
 
