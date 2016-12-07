@@ -1,10 +1,10 @@
+"use strict";
 (function () {
-    "use strict";
     /* 
         Tested only in Chrome, ¯\_(ツ)_/¯
         Please feel free to port/fix/fork.
     */
-    const ver = 'V.20161205.212031';
+    const ver = 'V.20161207.122658';
     const src = 'https://github.com/taengstagram/IG-Comments-Bookmarklet/';
     console.info(ver);
     console.info(src);
@@ -16,6 +16,7 @@
         return;
     }
     let shortCode = matches[1];
+    let caption = null;
     let maxPages = 0;
 
     function getCookie(name) {
@@ -68,6 +69,7 @@
         parent.innerHTML = '';
         if (firstChild.getElementsByTagName('h1').length > 0) {
             // has a caption so let's put it back
+            firstChild.getElementsByTagName('h1')[0].getElementsByTagName('span')[0].innerHTML = renderEmoji(caption);
             parent.appendChild(firstChild);
             parent.appendChild(document.createElement("hr"));
         }
@@ -216,6 +218,7 @@
             WANTED.push(info.media.owner.id);
         }
         if (info.media.caption) {
+            caption = info.media.caption;
             // extract mentions in caption
             let matchesMention = null;
             do {

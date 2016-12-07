@@ -1,6 +1,5 @@
+"use strict";
 (function () {
-    "use strict";
-
     const latestFile = 'https://raw.githubusercontent.com/taengstagram/IG-Comments-Bookmarklet/master/latest.txt';
     let xhr = new XMLHttpRequest();
     xhr.open("GET", latestFile, true);
