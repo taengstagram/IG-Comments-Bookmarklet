@@ -1,0 +1,25 @@
+{
+  "name": "ig-comments-bookmarklet",
+  "version": "0.1.0",
+  "description": "Filters IG comments",
+  "main": "bookmarklet.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "sed -i '' -E \"s/V\\.[0-9]+\\.[0-9]+/V\\.$(date '+%Y%m%d.%H%M%S')/\" bookmarklet.js && babel load.js --out-file dist/load.min.js --presets=latest,babili --no-comments && babel bookmarklet.js --out-file dist/bookmarklet.min.js --presets=latest,babili --no-comments"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/taengstagram/IG-Comments-Bookmarklet.git"
+  },
+  "author": "taengstagram",
+  "license": "Unlicense",
+  "bugs": {
+    "url": "https://github.com/taengstagram/IG-Comments-Bookmarklet/issues"
+  },
+  "homepage": "https://github.com/taengstagram/IG-Comments-Bookmarklet#readme",
+  "devDependencies": {
+    "babel-cli": "^6.18.0",
+    "babel-preset-babili": "0.0.9",
+    "babel-preset-latest": "^6.16.0"
+  }
+}
