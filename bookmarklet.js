@@ -4,7 +4,7 @@
         Tested only in Chrome, ¯\_(ツ)_/¯
         Please feel free to port/fix/fork.
     */
-    const ver = 'V.20161207.122658';
+    const ver = 'V.20161217.101646';
     const src = 'https://github.com/taengstagram/IG-Comments-Bookmarklet/';
     console.info(ver);
     console.info(src);
@@ -166,7 +166,13 @@
                 } 
                 if (info.comments.page_info.has_previous_page) {
                     let cursor = info.comments.page_info.start_cursor;
-                    sendRequest(shortCode, cursor);
+                    if (maxPages <= 50) {
+                        sendRequest(shortCode, cursor);
+                    } else {
+                        // Delay each request by X milliseconds if there are a lot of pages
+                        // to avoid being throttled by IG
+                        setTimeout(function() { sendRequest(shortCode, cursor); }, 2000);
+                    }
                     return;
                 }
                 renderStatus('Done. ' + displayComments.length + ' comment(s) found.');
@@ -217,6 +223,7 @@
         if (WANTED.indexOf(info.media.owner.id) < 0) {
             WANTED.push(info.media.owner.id);
         }
+
         if (info.media.caption) {
             caption = info.media.caption;
             // extract mentions in caption
