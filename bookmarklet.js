@@ -4,7 +4,7 @@
         Tested only in Chrome, ¯\_(ツ)_/¯
         Please feel free to port/fix/fork.
     */
-    const ver = 'V.20161217.101646';
+    const ver = 'V.20161225.115910';
     const src = 'https://github.com/taengstagram/IG-Comments-Bookmarklet/';
     console.info(ver);
     console.info(src);
@@ -78,6 +78,9 @@
             let node = nodes[i];
             let container = document.createElement("li");
             container.classList.add(itemClassName);
+            if (node.fromMention) {
+                container.classList.add("mentioned");
+            }
             container.innerHTML = '<a class="' + linkClassName + '" href="/' + node.user.username + '/">' + node.user.username + '</a> '
                 + '<span>' + renderEmoji(node.text) + '</span>'
                 + '<span data-comment-id="' + node.id + '" class="dt">' + generateDt(node.created_at) + '</span>';
@@ -159,7 +162,9 @@
                     } else {
                         let mentionFound = mentions.indexOf(comments[i].user.username);
                         if (mentionFound >= 0) {
-                            displayComments.push(comments[i]);
+                            let commentMentioned = comments[i];
+                            commentMentioned.fromMention = true;
+                            displayComments.push(commentMentioned);
                             mentions.splice(mentionFound, 1);   // remove from mentions once a match is found
                         }
                     }
@@ -210,7 +215,8 @@
         let styleCustom = document.createElement('style');
         styleCustom.innerHTML = 'img.emoji { height: 1em; width: 1em; margin: 0 .05em 0 .1em; vertical-align: -0.1em; } '
             + 'span.dt { color: #888; font-size: small; display: block; } .st { color: #1565c0; } '
-            + '.fn a { color: #1565c0; font-size: x-small; }';
+            + '.fn a { color: #1565c0; font-size: x-small; }'
+            + '.mentioned { opacity: 0.75; }';
         head.appendChild(styleCustom);
     }
     let xhr = new XMLHttpRequest()
