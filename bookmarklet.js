@@ -220,6 +220,7 @@
         head.appendChild(styleCustom);
     }
     let xhr = new XMLHttpRequest()
+    renderStatus('Loading...');
     xhr.open("GET", "https://www.instagram.com/p/" + shortCode + "/?__a=1", true);
     xhr.onreadystatechange = function() {
         if (xhr.readyState != 4) {
