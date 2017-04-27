@@ -4,7 +4,7 @@
         Tested only in Chrome, ¯\_(ツ)_/¯
         Please feel free to port/fix/fork.
     */
-    const ver = 'V.20161228.112502';
+    const ver = 'V.20170427.223554';
     const src = 'https://github.com/taengstagram/IG-Comments-Bookmarklet/';
     console.info(ver);
     console.info(src);
@@ -226,13 +226,13 @@
         if (xhr.readyState != 4) {
             return;
         }
-        let info = JSON.parse(xhr.responseText);
-        if (WANTED.indexOf(info.media.owner.id) < 0) {
-            WANTED.push(info.media.owner.id);
+        let info = JSON.parse(xhr.responseText).graphql;
+        if (WANTED.indexOf(info.shortcode_media.owner.id) < 0) {
+            WANTED.push(info.shortcode_media.owner.id);
         }
 
-        if (info.media.caption) {
-            caption = info.media.caption;
+        if (info.shortcode_media.edge_media_to_caption.edges.length) {
+            caption = info.shortcode_media.edge_media_to_caption.edges[0].node.text;
             // extract mentions in caption
             let matchesMention = null;
             do {
@@ -242,10 +242,10 @@
                 }
             } while (matchesMention);
         }
-        if (info.media.usertags.nodes.length > 0) {
+        if (info.shortcode_media.edge_media_to_tagged_user.edges.length > 0) {
             // extract user tags as mentions
-            for (let i = 0; i < info.media.usertags.nodes.length; i++) {
-                let username = info.media.usertags.nodes[i].user.username;
+            for (let i = 0; i < info.shortcode_media.edge_media_to_tagged_user.edges.length; i++) {
+                let username = info.shortcode_media.edge_media_to_tagged_user.edges[i].node.user.username;
                 if (mentions.indexOf(username) < 0) {
                     mentions.push(username);
                 }
