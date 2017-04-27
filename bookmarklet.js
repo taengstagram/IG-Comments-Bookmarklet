@@ -4,7 +4,7 @@
         Tested only in Chrome, ¯\_(ツ)_/¯
         Please feel free to port/fix/fork.
     */
-    const ver = 'V.20170427.223554';
+    const ver = 'V.20170427.224319';
     const src = 'https://github.com/taengstagram/IG-Comments-Bookmarklet/';
     console.info(ver);
     console.info(src);
@@ -236,7 +236,7 @@
             // extract mentions in caption
             let matchesMention = null;
             do {
-                matchesMention = mentionRegex.exec(info.media.caption);
+                matchesMention = mentionRegex.exec(caption);
                 if (matchesMention && mentions.indexOf(matchesMention[1]) < 0) {
                     mentions.push(matchesMention[1]);
                 }
@@ -251,8 +251,8 @@
                 }
             }
         }
-        maxPages = Math.ceil(info.media.comments.count / 1000);
-        sendRequest(info.media.code, '0');
+        maxPages = Math.ceil(info.shortcode_media.edge_media_to_comment.count / 1000);
+        sendRequest(info.shortcode_media.shortcode, '0');
     };
     xhr.send();
 })();
