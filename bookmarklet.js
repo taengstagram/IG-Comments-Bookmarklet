@@ -4,7 +4,7 @@
         Tested only in Chrome, ¯\_(ツ)_/¯
         Please feel free to port/fix/fork.
     */
-    const ver = 'V.20170427.224319';
+    const ver = 'V.20170617.090454';
     const src = 'https://github.com/taengstagram/IG-Comments-Bookmarklet/';
     console.info(ver);
     console.info(src);
@@ -18,6 +18,8 @@
     let shortCode = matches[1];
     let caption = null;
     let maxPages = 0;
+    let tz = "Asia/Seoul"
+    let dateTimeFormat = 'YYYY-MM-DD h:mm:ssA z'
 
     function getCookie(name) {
       let value = "; " + document.cookie;
@@ -33,18 +35,14 @@
     }
 
     function generateParams(shortCode, cursor) {
-        let params = "q=" + 
-            encodeURIComponent(
-                "ig_shortcode(" + shortCode + ") {comments.before(" + cursor + ", 1000) "
-                + "{count, nodes {id, created_at, text, user {id, profile_pic_url, username, full_name}}, page_info}}");
-        return params;
+        return "query_id=17852405266163336&first=1000&shortcode=" + encodeURIComponent(shortCode) + "&after=" + encodeURIComponent(cursor);
     }
 
     function generateDt(created_at) {
         if (typeof(moment) == 'undefined' || typeof(moment.tz) == 'undefined') {
             return new Date(created_at * 1000);
         }
-        return moment.tz(created_at * 1000, "Asia/Seoul").format('YYYY-MM-DD h:mm:ssA [KST]');
+        return moment.tz(created_at * 1000, tz).format(dateTimeFormat);
     }
 
     function renderComments(nodes) {
@@ -53,37 +51,39 @@
         }
         nodes.sort(function(a, b) {
             // sort in asc datetime order
-            if (a.created_at > b.created_at) {
+            if (a.node.created_at > b.node.created_at) {
                 return 1;
             }
-            if (a.created_at < b.created_at) {
+            if (a.node.created_at < b.node.created_at) {
                 return -1;
             }
             return 0;
         });
         let parent = uiAnchor.parentNode.getElementsByTagName('ul')[0];
         let firstChild = parent.childNodes[0];
+        let secondChild = parent.childNodes[1];
         let itemClassName = firstChild.className;
         let linkClassName = parent.childNodes[2].getElementsByTagName('a')[0].className;
 
         parent.innerHTML = '';
-        if (firstChild.getElementsByTagName('h1').length > 0) {
+        if (secondChild.getElementsByTagName('button').length > 0) {
             // has a caption so let's put it back
-            firstChild.getElementsByTagName('h1')[0].getElementsByTagName('span')[0].innerHTML = renderEmoji(caption);
+            firstChild.getElementsByTagName('span')[0].getElementsByTagName('span')[0].innerHTML = renderEmoji(caption);
             parent.appendChild(firstChild);
             parent.appendChild(document.createElement("hr"));
         }
 
         for (let i = 0; i < nodes.length; i++) {
-            let node = nodes[i];
+            let comment = nodes[i].node;
             let container = document.createElement("li");
             container.classList.add(itemClassName);
-            if (node.fromMention) {
+            if (nodes[i].fromMention) {
                 container.classList.add("mentioned");
             }
-            container.innerHTML = '<a class="' + linkClassName + '" href="/' + node.user.username + '/">' + node.user.username + '</a> '
-                + '<span>' + renderEmoji(node.text) + '</span>'
-                + '<span data-comment-id="' + node.id + '" class="dt">' + generateDt(node.created_at) + '</span>';
+            container.innerHTML = '<a class="' + linkClassName + '" href="/' + comment.owner.username + '/">' + comment.owner.username;
+
+            container.innerHTML += '</a> <span>' + renderEmoji(comment.text) + '</span>'
+                + '<span data-comment-id="' + comment.id + '" class="dt">' + generateDt(comment.created_at) + '</span>';
             parent.appendChild(container);
 
             if (i == nodes.length - 1) {
@@ -91,11 +91,10 @@
                     '<span class="fn"><a href="' + src + '">//source</a></span>');
             }
         }
-
     }
 
     function renderStatus(text) {
-        let parent = uiAnchor.childNodes[0];
+        let parent = document.getElementsByTagName('article')[0].childNodes[2].childNodes[3];
         parent.innerHTML = '<span class="st">' + text + '</span>';
     }
 
@@ -124,8 +123,7 @@
         renderStatus('Loading... ' + q + '/' + maxPages);
         let xhr = new XMLHttpRequest();
         let params = generateParams(shortCode, cursor);
-        xhr.open("POST", "https://www.instagram.com/query/", true);
-        xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+        xhr.open("GET", "https://www.instagram.com/graphql/query/?" + params, true);
         xhr.setRequestHeader("x-csrftoken", getCookie('csrftoken'));
         xhr.onreadystatechange = function() { 
             if (xhr.readyState != 4) {
@@ -135,32 +133,32 @@
             try {
                 let info = JSON.parse(xhr.responseText);
                 renderStatus('Processing... ' + q + '/' + maxPages);
-                let comments = info.comments.nodes;
+                let comments = info.data.shortcode_media.edge_media_to_comment.edges;
                 comments.sort(function(a, b) {
                     // sort in desc datetime order
-                    if (a.created_at > b.created_at) {
+                    if (a.node.created_at > b.node.created_at) {
                         return -1;
                     }
-                    if (a.created_at < b.created_at) {
+                    if (a.node.created_at < b.node.created_at) {
                         return 1;
                     }
                     return 0;
                 });
                 for (let i = 0; i < comments.length; i++) {
-                    if (WANTED.indexOf(comments[i].user.id) >= 0) {
+                    if (WANTED.indexOf(comments[i].node.owner.id) >= 0) {
                         displayComments.push(comments[i]);
 
                         // extract mention from comment
                         let matchesMention = null;
                         do {
-                            matchesMention = mentionRegex.exec(comments[i].text);
+                            matchesMention = mentionRegex.exec(comments[i].node.text);
                             if (matchesMention && mentions.indexOf(matchesMention[1]) < 0) {
                                 mentions.push(matchesMention[1]);
                             }
                         } while (matchesMention);
 
                     } else {
-                        let mentionFound = mentions.indexOf(comments[i].user.username);
+                        let mentionFound = mentions.indexOf(comments[i].node.owner.username);
                         if (mentionFound >= 0) {
                             let commentMentioned = comments[i];
                             commentMentioned.fromMention = true;
@@ -169,8 +167,8 @@
                         }
                     }
                 } 
-                if (info.comments.page_info.has_previous_page) {
-                    let cursor = info.comments.page_info.start_cursor;
+                if (info.data.shortcode_media.edge_media_to_comment.page_info.has_next_page) {
+                    let cursor = info.data.shortcode_media.edge_media_to_comment.page_info.end_cursor;
                     if (maxPages <= 50) {
                         sendRequest(shortCode, cursor);
                     } else {
@@ -181,6 +179,7 @@
                     return;
                 }
                 renderStatus('Done. ' + displayComments.length + ' comment(s) found.');
+
                 renderComments(displayComments);
                 
             } catch (err) {
@@ -202,7 +201,7 @@
     if (typeof(twemoji) == 'undefined' || typeof(moment) == 'undefined' || typeof(moment.tz) == 'undefined') {  // inject if not available
         let head = document.getElementsByTagName('head')[0];
         let scripts = [
-            'https://twemoji.maxcdn.com/2/twemoji.min.js?2.2.2'
+            'https://twemoji.maxcdn.com/2/twemoji.min.js?2.2.5'
             , 'https://unpkg.com/moment/min/moment.min.js'
             , 'https://unpkg.com/moment-timezone/builds/moment-timezone-with-data.min.js'
         ];
@@ -216,7 +215,8 @@
         styleCustom.innerHTML = 'img.emoji { height: 1em; width: 1em; margin: 0 .05em 0 .1em; vertical-align: -0.1em; } '
             + 'span.dt { color: #888; font-size: small; display: block; } .st { color: #1565c0; } '
             + '.fn a { color: #1565c0; font-size: x-small; }'
-            + '.mentioned { opacity: 0.75; }';
+            + '.mentioned { opacity: 0.75; }'
+            + '.verified { flex-shrink: 0; margin-left: 2px; display: inline-block; overflow: hidden; text-indent: 110%; white-space: nowrap; }';
         head.appendChild(styleCustom);
     }
     let xhr = new XMLHttpRequest()
@@ -252,7 +252,7 @@
             }
         }
         maxPages = Math.ceil(info.shortcode_media.edge_media_to_comment.count / 1000);
-        sendRequest(info.shortcode_media.shortcode, '0');
+        sendRequest(info.shortcode_media.shortcode, '');
     };
     xhr.send();
 })();
