@@ -1,1 +1,1 @@
-https://cdn.rawgit.com/taengstagram/IG-Comments-Bookmarklet/c04a2d3019f81ccc1aa0f17e655443a474aab146/dist/bookmarklet.min.js
+https://cdn.jsdelivr.net/gh/taengstagram/IG-Comments-Bookmarklet@c04a2d3019f81ccc1aa0f17e655443a474aab146/dist/bookmarklet.min.js
